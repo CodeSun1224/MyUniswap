@@ -57,7 +57,7 @@ contract V2Pair is ERC20, Math{
 
     ///使用initialize代替constructor进行token合约地址的初始化
     function initialize(address token0_, address token1_) public {
-        require(token0_ == address(0) && token1_ == address(0), "this pair already initialize");
+        require(token0 == address(0) && token1 == address(0), "this pair already initialize");
         token0 = token0_;
         token1 = token1_;
     }
