@@ -45,6 +45,8 @@ contract V2PairTest is Test{
         assertEq(pair.balanceOf(address(this)), 1 ether - 1000);
         assertEq(pair.totalSupply(), 1 ether);
         assertReserves(1 ether, 1 ether);
+        assertEq(token0.balanceOf(address(this)), 9 ether);
+        assertEq(token1.balanceOf(address(this)), 9 ether);
 
         // 按比例添加
         token0.transfer(address(pair), 1 ether);
@@ -61,6 +63,64 @@ contract V2PairTest is Test{
         assertEq(pair.balanceOf(address(this)), 3 ether - 1000); // 1 ether - 1000 + 1 ether + 1 ether
         assertEq(pair.totalSupply(), 3 ether); // 1 + 1 + 1
         assertReserves(3 ether, 4 ether); // 2 + 2 ， 2 + 1
+    }
+
+    function testBurn() public {
+        // 首次添加
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 1 ether);
+
+        pair.mint(address(this));
+        uint256 liquidity = pair.balanceOf(address(this));
+        pair.transfer(address(pair), liquidity);
+        pair.burn(address(this));
+        /// LP Token的总数为1000
+        assertEq(pair.totalSupply(), 1000);
+        assertEq(pair.balanceOf(address(this)), 0);
+        assertReserves(1000, 1000);
+        assertEq(token0.balanceOf(address(this)), 10 ether - 1000);
+        assertEq(token1.balanceOf(address(this)), 10 ether - 1000);
+    }
+
+    function testSwapZeroOut() public {
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        vm.expectRevert("InsufficientOutputAmount");
+        pair.swap(0, 0, address(this), "");
+    }
+
+    function testSwapBidirectional() public {
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        token1.transfer(address(pair), 0.2 ether);
+        pair.swap(0.18 ether, 0.09 ether, address(this), "");
+
+        /// this总共10 ether，给了pair 1 ether，之后又给了0.1 ether， swap后又转给this 0.09 ether
+        assertEq(
+            token0.balanceOf(address(this)),
+            10 ether - 1 ether - 0.01 ether,
+            "unexpected token0 balance"
+        );
+        assertEq(
+            token1.balanceOf(address(this)),
+            10 ether - 2 ether - 0.02 ether,
+            "unexpected token1 balance"
+        );
+        /// swap的最后更新reserve0, reserve1
+        assertReserves(2 ether + 0.02 ether, 1 ether + 0.01 ether);
+    }
+
+    function testFirstMintSmall() public {
+        token0.transfer(address(pair), 1 );
+        token1.transfer(address(pair), 1 );
+        /// 要加在mint前面
+        vm.expectRevert(stdError.arithmeticError);
+        pair.mint(address(this));
     }
 
     function assertReserves(uint112 reserve0_, uint112 reserve1_) internal {
