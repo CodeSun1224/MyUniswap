@@ -171,7 +171,7 @@ contract V2Router {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) internal returns (uint256 amountA, uint256 amountB) {
+    ) internal view returns (uint256 amountA, uint256 amountB) {
         /// 获取交易对中的余额
         (uint256 reserveA, uint256 reserveB) = V2Library.getReserves(
             address(factory),
