@@ -5,16 +5,7 @@ import "forge-std/Test.sol";
 import "../src/V2Pair.sol";
 import "../src/solmate/tokens/ERC20.sol";
 import "../src/V2PairFactory.sol";
-
-contract MyERC20 is ERC20{
-    constructor (string memory _name, string memory _symbol, uint8 _decimals) 
-        ERC20 (_name,_symbol,_decimals) 
-    {}
-        
-    function mint(address to, uint256 amount) public {
-        _mint(to, amount);
-    }
-}
+import "../test/MyERC20.sol";
 
 contract V2PairTest is Test{
     MyERC20 token0;
